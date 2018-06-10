@@ -19,7 +19,6 @@ TIME_STEP_SIZE = 0.02
 MARBLE_WEIGHT = 20
 SUN_WEIGHT = 400
 BIG_G = 1
-SPEED_LIMIT = 30
 # os.environ['SDL_VIDEO_WINDOW_POS'] = "{},{}".format(0,0)
 
 class Game(object):
@@ -40,15 +39,19 @@ class Game(object):
             if self.x < 0:
                 self.x = 0
                 self.dx *= -1
+                self.dx /= 2
             if self.y < 0:
                 self.y = 0
                 self.dy *= -1
+                self.dy /= 2
             if self.x > WIDTH:
                 self.x = WIDTH
                 self.dx *= -1
+                self.dx /= 2
             if self.y > HEIGHT:
                 self.y = HEIGHT
                 self.dy *= -1
+                self.dy /= 2
         def apply_gravity(self, to_x, to_y):
             force = BIG_G * MARBLE_WEIGHT * SUN_WEIGHT
             r = self.distance_to(to_x, to_y) * 2
@@ -63,12 +66,6 @@ class Game(object):
                 force_y *= -1
             self.dx += force_x
             self.dy += force_y
-            if abs(self.dx) > SPEED_LIMIT:
-                self.dx /= self.dx
-                self.dx *= SPEED_LIMIT
-            if abs(self.dy) > SPEED_LIMIT:
-                self.dy /= self.dy
-                self.dy *= SPEED_LIMIT
         def distance_to(self, to_x, to_y):
             return math.sqrt( (to_x - self.x)**2 + (to_y - self.y)**2 )
 
@@ -87,6 +84,9 @@ class Game(object):
             pygame.draw.circle(self.gameDisplay, black, (int(marble.x), int(marble.y)), 5)
         for grav in self.centers_of_gravity:
             pygame.draw.circle(self.gameDisplay, red, (grav[0], grav[1]), 10)
+        myfont = pygame.font.SysFont('Comic Sans MS', 30)
+        textsurface = myfont.render(str(SUN_WEIGHT), False, (255, 0, 0))
+        self.gameDisplay.blit(textsurface,(10,10))
         # self.gameDisplay.fill(black, (STEP_SIZE*body_part[0], STEP_SIZE*body_part[1], STEP_SIZE, STEP_SIZE))
         # self.gameDisplay.fill(red, (self.food[0]*STEP_SIZE, self.food[1]*STEP_SIZE, STEP_SIZE, STEP_SIZE))
         # pygame.draw.line(self.gameDisplay, black, (10,10), (10, 30), 1)
@@ -105,7 +105,9 @@ class Game(object):
             self.move()
 
     def start(self):
+        global SUN_WEIGHT
         self.end = False
+        pause = False
         while not self.end:
             for event in pygame.event.get():
                 if event.type == pygame.KEYUP:
@@ -117,21 +119,26 @@ class Game(object):
                 #         self.change_orientation('up')
                 #     if event.key == pygame.K_DOWN:
                 #         self.change_orientation('down')
-                    if event.key == pygame.K_m:
+                    if event.key == pygame.K_p:
+                        pause = not pause
+                    if event.key == pygame.K_r:
                         self.__init__()
                     if event.key == pygame.K_q:
                         self.end = True
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_LEFT:
-                        pass
+                        SUN_WEIGHT -= 100
+                        print(SUN_WEIGHT)
                     if event.key == pygame.K_RIGHT:
-                        pass
+                        SUN_WEIGHT += 100
+                        print(SUN_WEIGHT)
                 if event.type == pygame.QUIT:
                     self.end = True
                 if event.type == pygame.MOUSEBUTTONUP:
                     pos = pygame.mouse.get_pos()
                     self.centers_of_gravity.append(pos)
-            self.tick()
+            if not pause:
+                self.tick()
             self.gameDisplay.fill(white)
             self.draw()
             pygame.display.update()
